@@ -32,12 +32,9 @@ def combine_lda_results_with_lda_output(corpus, lda_model, df, filename_read):
     ids = []
     datetimes = []
     topic_ids = []
-    # topic_words = []
-    counter_index = 0
-
-    for bow in corpus:
+    topic_counter = 0
+    for counter_index, bow in enumerate(corpus):
         topics = lda_model.get_document_topics(bow)
-        topic_counter = 0
         max_prob = 0
         max_prob_topic = None
         for topic in topics:
@@ -53,8 +50,6 @@ def combine_lda_results_with_lda_output(corpus, lda_model, df, filename_read):
         datetime = df.iloc[counter_index]['datetime']
         ids.append(tweet_id)
         datetimes.append(datetime)
-        counter_index += 1
-
     if len(ids) != len(topic_ids):
         logger.error("FATAL ERROR caused by data mismatch: len other cols: " + len(ids) + " len new topic cols:" + len(
             topic_ids))
@@ -177,10 +172,8 @@ def write_nested_dict_to_file(filename_write, separator, texts, nested_level=2, 
 
 def write_dict_to_file(filename_write, texts, is_value_list=False):
     logger.info("started to write")
-    counter = 0
     file_write = open(filename_write, "w", encoding='utf-8')
-    for key, value in texts.items():
-        counter += 1
+    for counter, (key, value) in enumerate(texts.items(), start=1):
         if counter % 1000 == 0:
             logger.info(str(counter))
         if is_value_list:
@@ -228,26 +221,37 @@ def remove_unwanted_words_from_df(df):
 
 def get_mongo_client_db():
     client = MongoClient('localhost:27017')
-    db = client.TweetScraper
-    return db
+    return client.TweetScraper
 
 
 def read_file(filename, delimiter=None, names=None, dtype=None, lineterminator='\n'):
-    if dtype is None:
-
-        #df = pd.read_csv(filename, delimiter=delimiter, error_bad_lines=False,
-        #                 names=names, index_col=False, engine='python')
-        df = pd.read_csv(filename, delimiter=delimiter, encoding="ISO-8859-1", error_bad_lines=False,
-                         names=names, index_col=False, engine='python')
-    else:
-        df = pd.read_csv(filename, delimiter=delimiter, encoding="ISO-8859-1", error_bad_lines=False,
-                     names=names,lineterminator=lineterminator, dtype=dtype, index_col=False)
-    return df
+    return (
+        pd.read_csv(
+            filename,
+            delimiter=delimiter,
+            encoding="ISO-8859-1",
+            error_bad_lines=False,
+            names=names,
+            index_col=False,
+            engine='python',
+        )
+        if dtype is None
+        else pd.read_csv(
+            filename,
+            delimiter=delimiter,
+            encoding="ISO-8859-1",
+            error_bad_lines=False,
+            names=names,
+            lineterminator=lineterminator,
+            dtype=dtype,
+            index_col=False,
+        )
+    )
 
 
 def every_col_is_nan(row):
     every_col_nan = True
-    for i in range(0, row.size):
+    for i in range(row.size):
         temp = row[i]
         if(type(temp)==str):
             temp = int(temp)
@@ -288,17 +292,15 @@ def read_file_to_dict(file, delimiter=None):
 
 
 def calculate_user_stance(count_remain, count_leave):
-    user_stance = -1
     if (count_remain + count_leave) == 0:
-        return user_stance
+        return -1
     score = count_remain / (count_remain + count_leave)
     if score >= 0.6:
-        user_stance = 0
+        return 0
     elif score <= 0.4:
-        user_stance = 1
+        return 1
     else:
-        user_stance = -1
-    return user_stance
+        return -1
 
 
 def convert_consolidate_monthly_stances(df_grouped):
@@ -312,7 +314,7 @@ def convert_consolidate_monthly_stances(df_grouped):
         for index, row in df_grouped.iterrows():
             user_id = row[0]
             stance = row[1]
-            datetime = row[2][0:7]
+            datetime = row[2][:7]
             count = row[3]
 
             if user_id not in dict:
@@ -357,7 +359,7 @@ def convert_consolidate_monthly_stances(df_grouped):
         return new_dict
 
     except Exception as ex:
-        print(str(ex))
+        print(ex)
 
 
 def keywithmaxval(d):
@@ -461,8 +463,7 @@ def drop_nans(df):
     return df
 
 def extract_hash_tags(text):
-    ss = [part[1:] for part in text.split() if part.startswith('#')]
-    return ss
+    return [part[1:] for part in text.split() if part.startswith('#')]
 
 
 def extract_hashtags_mentions_linkexistences(tweets):
@@ -478,9 +479,7 @@ def extract_hashtags_mentions_linkexistences(tweets):
             mention_count = len(tweet.split("@")) - 1
             sizes_mentions.append(mention_count)
 
-            contains_link = 0
-            if "http" in tweet:
-                contains_link = 1
+            contains_link = 1 if "http" in tweet else 0
             list_contains_link.append(contains_link)
 
         except Exception as ex:
@@ -491,12 +490,10 @@ def extract_hashtags_mentions_linkexistences(tweets):
 
 def write_dict_to_file(filename_write, dict):
     print("started to write")
-    counter = 0
     file_write = open(filename_write, "w", encoding='utf-8')
-    for key,value in dict.items():
-        counter += 1
+    for counter, (key, value) in enumerate(dict.items(), start=1):
         if counter %1000 == 0:
-            print(str(counter))
+            print(counter)
         file_write.write(str(key)+"~"+str(value))
         file_write.write("\n")
     print("completed writing")

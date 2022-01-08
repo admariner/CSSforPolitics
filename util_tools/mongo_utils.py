@@ -6,21 +6,17 @@ import pandas as pd
 
 
 def convert_mongo_user_json_to_csv():
+    store_list = []
+
     for i in range(1,2):
         input_file = None
 
-        if i<10:
-            letter = "0" + str(i)
-        else:
-            letter = str(i)
-
+        letter = "0" + str(i) if i<10 else str(i)
         filename = '/Users/emrecalisir/git/cortico/discovery/users_6sep.csv'
 
         input_file = open(filename)
         #input_file = open ('/Users/emrecalisir/git/cortico/discovery/test.csv')
         json_array = json.load(input_file)
-        store_list = []
-
         counter = 0
         with open(filename + '.out',"w") as f:
             for res in json_array:
@@ -28,47 +24,14 @@ def convert_mongo_user_json_to_csv():
                     if(counter%100==0):
                         print("current status : " + str(counter))
 
-                    if "user_id" in res:
-                        user_id = res["user_id"]
-                    else:
-                        user_id = ""
-
-                    if "user_screen_name" in res:
-                        user_screen_name = res["user_screen_name"]
-                    else:
-                        user_screen_name = ""
-
-                    if "bot_sc" in res:
-                        bot_sc = res["bot_sc"]
-                    else:
-                        bot_sc = ""
-
-                    if "t_eth" in res:
-                        t_eth = res["t_eth"]
-                    else:
-                        t_eth = ""
-
-                    if "t_age" in res:
-                        t_age = res["t_age"]
-                    else:
-                        t_age = ""
-
-                    if "t_gender" in res:
-                        t_gender = res["t_gender"]
-                    else:
-                        t_gender = ""
-
-                    if "api_time" in res:
-                        api_time = res["api_time"]
-                    else:
-                        api_time = ""
-
-                    if "bot_err" in res:
-                        bot_err = res["bot_err"]
-                    else:
-                        bot_err = ""
-
-
+                    user_id = res["user_id"] if "user_id" in res else ""
+                    user_screen_name = res["user_screen_name"] if "user_screen_name" in res else ""
+                    bot_sc = res["bot_sc"] if "bot_sc" in res else ""
+                    t_eth = res["t_eth"] if "t_eth" in res else ""
+                    t_age = res["t_age"] if "t_age" in res else ""
+                    t_gender = res["t_gender"] if "t_gender" in res else ""
+                    api_time = res["api_time"] if "api_time" in res else ""
+                    bot_err = res["bot_err"] if "bot_err" in res else ""
                     write_line = str(user_id)+"~"+str(user_screen_name)+"~"+str(bot_sc)+"~"+str(api_time)+"~"+str(bot_err)+"~"+str(t_eth)+"~"+str(t_age)+"~"+str(t_gender)
                     counter += 1
                     f.write(write_line + "\n")

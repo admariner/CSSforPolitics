@@ -51,11 +51,11 @@ def enrich_mongo_with_followers_info(consumer_key,consumer_secret,access_token,a
             mymonth = str(month).rjust(2, '0')
             for day in range(day_start, day_end):
                 myday = str(day).rjust(2, '0')
-                for hour in range(0, 24):
+                for hour in range(24):
                     myhour = str(hour).rjust(2, '0')
-                    for min in range(0, 60):
+                    for min in range(60):
                         mymin = str(min).rjust(2, '0')
-                        for sec in range(0, 60):
+                        for sec in range(60):
                             mysec = str(sec).rjust(2, '0')
                             filterdate = "2018-" + str(mymonth) + "-" + str(myday) + " " + str(myhour) + ":" + str(
                                 mymin) + ":" + str(mysec)
@@ -75,7 +75,7 @@ def enrich_mongo_with_followers_info(consumer_key,consumer_secret,access_token,a
                                             "ID"] + " has already user error. skipping. no need to enrich.")
                                         continue;
 
-                                    if not "user_id" in res:
+                                    if "user_id" not in res:
                                         logger.info(res["ID"] + " has not user id. skipping record.")
                                         continue;
                                     existing_user = False

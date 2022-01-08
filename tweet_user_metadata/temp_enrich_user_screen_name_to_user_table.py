@@ -22,11 +22,11 @@ def main():
             mymonth = str(month).rjust(2, '0')
             for day in range(1, 32):
                 myday = str(day).rjust(2, '0')
-                for hour in range(0, 24):
+                for hour in range(24):
                     myhour = str(hour).rjust(2, '0')
-                    for min in range(0, 60):
+                    for min in range(60):
                         mymin = str(min).rjust(2, '0')
-                        for sec in range(0, 60):
+                        for sec in range(60):
                             mysec = str(sec).rjust(2, '0')
                             filterdate = "2016-" + str(mymonth) + "-" + str(myday) + " " + str(myhour) + ":" + str(
                                 mymin) + ":" + str(mysec)
@@ -38,21 +38,19 @@ def main():
                                         logger.info("end of tweet cursor")
                                         break
 
-                                    if not "user_id" in res:
+                                    if "user_id" not in res:
                                         logger.info(res["ID"] + " has not user id. skipping record.")
                                         continue;
 
-                                    if not "user_screen_name" in res:
+                                    if "user_screen_name" not in res:
                                         logger.info(res["user_id"] + " has not screen name. skipping record.")
                                         continue;
 
-                                    #if "user_err" in res:
-                                        #    logger.info("tweet ID: " + res["ID"] + " has already user error. skipping. no need to enrich.")
                                     #continue;
                                     existing = False
                                     for res_user in db.user.find({"user_id":res["user_id"]}):
                                         existing = True
-                                        if not "user_screen_name" in res_user:
+                                        if "user_screen_name" not in res_user:
                                             db.user.update({"user_id": res["user_id"]}, {"$set": {"user_screen_name": res["user_screen_name"]}})
                                             counter_existing_user_new += 1
                                             logger.info(res_user["user_id"] + " counter_existing_user_new: " + str(counter_existing_user_new))

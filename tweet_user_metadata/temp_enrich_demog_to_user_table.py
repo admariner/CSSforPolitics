@@ -7,12 +7,9 @@ from util import globals
 def get_all_followers(screen_name, api):
 
     ids = []
-    counter = 0
-    for page in tweepy.Cursor(api.followers_ids, screen_name=screen_name).pages():
+    for counter, page in enumerate(tweepy.Cursor(api.followers_ids, screen_name=screen_name).pages(), start=1):
         ids.extend(page)
         logger.info("len")
-        #time.sleep(60)
-        counter += 1
         logger.info("counter'"+str(counter) + " query for screen_name: " + screen_name + " len of fetched follower count: " + str(len(ids)))
     logger.info("followers of " + screen_name + " are: " + str(ids))
     return ids
@@ -37,11 +34,11 @@ def main():
             mymonth = str(month).rjust(2, '0')
             for day in range(1, 32):
                 myday = str(day).rjust(2, '0')
-                for hour in range(0, 24):
+                for hour in range(24):
                     myhour = str(hour).rjust(2, '0')
-                    for min in range(0, 60):
+                    for min in range(60):
                         mymin = str(min).rjust(2, '0')
-                        for sec in range(0, 60):
+                        for sec in range(60):
                             mysec = str(sec).rjust(2, '0')
                             filterdate = "2016-" + str(mymonth) + "-" + str(myday) + " " + str(myhour) + ":" + str(
                                 mymin) + ":" + str(mysec)
@@ -53,16 +50,14 @@ def main():
                                         logger.info("end of tweet cursor")
                                         break
 
-                                    if not "user_id" in res:
+                                    if "user_id" not in res:
                                         logger.info(res["ID"] + " has not user id. skipping record.")
                                         continue;
 
-                                    if not "t_age" in res:
+                                    if "t_age" not in res:
                                         logger.info(res["user_id"] + " has not demographics info. skipping record.")
                                         continue;
 
-                                    #if "user_err" in res:
-                                        #    logger.info("tweet ID: " + res["ID"] + " has already user error. skipping. no need to enrich.")
                                     #continue;
                                     existing = False
                                     for res_user in db.user.find({"user_id":res["user_id"]}):

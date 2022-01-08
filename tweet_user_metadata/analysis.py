@@ -43,7 +43,7 @@ def extract_top_mentioned_accounts(filename_read):
                     if(mention==""):
                         continue;
                     mention = text_utils.remove_ampercant_first_char_if_exists(mention)
-                    if mention in mentioned_accounts.keys():
+                    if mention in mentioned_accounts:
                         mentioned_accounts[mention] += 1
                     else:
                         mentioned_accounts[mention] = 1
@@ -166,11 +166,11 @@ def extract_daily_average_retweet_likes(file):
                 datetime = fields[0]
                 retweet_cnt = int(fields[4])
                 like_cnt = int(fields[5])
-                if datetime[0:2] != '20' or len(datetime) != 19:
+                if datetime[:2] != '20' or len(datetime) != 19:
                     continue
-                yearmonthday = datetime[0:10]
+                yearmonthday = datetime[:10]
 
-                if not yearmonthday in dict.keys():
+                if yearmonthday not in dict:
                     dict[yearmonthday] = [retweet_cnt, like_cnt, int(1)]
                 else:
                     dict[yearmonthday][0] += retweet_cnt
@@ -208,7 +208,7 @@ def extract_hashtag_usage(file):
 
                 for tag in tweeet_hashtags:
                     tag = tag.lower()
-                    if tag in hashtag_usage.keys():
+                    if tag in hashtag_usage:
                         hashtag_usage[tag]+=1
                     else:
                         hashtag_usage[tag]=1

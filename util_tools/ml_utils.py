@@ -54,13 +54,11 @@ def predict_with_multiple_classifiers(classifier, df_unlabeled, model_remain, mo
 
 
 def predict_with_remain_classifier(processed_text, model_remain):
-    remain_confidence= model_remain.predict_proba(processed_text)[:, 1]
-    return remain_confidence
+    return model_remain.predict_proba(processed_text)[:, 1]
 
 
 def predict_with_leave_classifier(processed_text, model_leave):
-    leave_confidence= model_leave.predict_proba(processed_text)[:, 1]
-    return leave_confidence
+    return model_leave.predict_proba(processed_text)[:, 1]
 
 
 def predict_unlabeled_data(is_binary_classification, classifier, df_train, df_unlabeled, remove_low_pred=False, prob_enabled=False):
@@ -86,7 +84,7 @@ def predict_unlabeled_data(is_binary_classification, classifier, df_train, df_un
 
 
 def build_lda_model(corpus, id2word, topic_cnt):
-    lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
+    return gensim.models.ldamodel.LdaModel(corpus=corpus,
                                                 id2word=id2word,
                                                 num_topics=topic_cnt,
                                                 random_state=100,
@@ -95,14 +93,13 @@ def build_lda_model(corpus, id2word, topic_cnt):
                                                 passes=10,
                                                 alpha='auto',
                                                 per_word_topics=True)
-    return lda_model
 
 
 def evaluate_lda_results(corpus, id2word, texts, lda_model, topic_cnt, filename_read, visual_enabled = True):
     top_topics = lda_model.top_topics(corpus=corpus)
 
     # Average topic coherence is the sum of topic coherences of all topics, divided by the number of topics.
-    avg_topic_coherence = sum([t[1] for t in top_topics]) / topic_cnt
+    avg_topic_coherence = sum(t[1] for t in top_topics) / topic_cnt
     logger.info("Average topic coherence: " + str(avg_topic_coherence))
 
     logger.info("top topics ordered by coherence score")
@@ -291,8 +288,7 @@ def R2(ypred, ytrue):
     y_avg = np.mean(ytrue)
     SS_tot = np.sum((ytrue - y_avg)**2)
     SS_res = np.sum((ytrue - ypred)**2)
-    r2 = 1 - (SS_res/SS_tot)
-    return r2
+    return 1 - (SS_res/SS_tot)
 
 
 def save_model(model, filename):
@@ -300,8 +296,7 @@ def save_model(model, filename):
 
 
 def restore_model(filename):
-    loaded_model = pickle.load(open(filename, 'rb'))
-    return loaded_model
+    return pickle.load(open(filename, 'rb'))
 
 
 def run_prob_based_train_test_kfold_roc_curve_plot(classifier, tweet_ids, x, y, is_plot_enabled=True, discard_low_pred=False):
@@ -473,8 +468,8 @@ def tryy():
 
     # Compute ROC curve and ROC area for each class
     fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
+    tpr = {}
+    roc_auc = {}
     for i in range(n_classes):
         fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_score[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
@@ -492,8 +487,8 @@ def multiclass_roc(X_train, X_test, y_train, y_test, n_classes):
 
     # Compute ROC curve and ROC area for each class
     fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
+    tpr = {}
+    roc_auc = {}
     for i in range(n_classes):
         fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_score[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
@@ -541,7 +536,7 @@ def discard_low_pred_prob_prediction_class_1(y_test, y_pred, max_discard_prob):
     y_pred_new = []
     counter_discarded = 0
     logger.info("total size of original entries: " + str(len(y_pred)))
-    for i in range(0, len(y_pred)):
+    for i in range(len(y_pred)):
         pred_confidence = y_pred[i]
 
         if pred_confidence < max_discard_prob:
@@ -561,7 +556,7 @@ def discard_low_pred_prob_prediction_couple(y_test, y_pred, min_discard_prob, ma
     counter_discarded = 0
     logger.info("total size of original entries: " + str(len(y_pred)))
 
-    for i in range(0, len(y_pred)):
+    for i in range(len(y_pred)):
         if y_pred[i] > min_discard_prob and y_pred[i] < max_discard_prob:
             logger.debug(str(i) + "th record pred prob: " + str(y_pred[i]) + ". It'll be discarded from evaluation part")
             counter_discarded += 1
@@ -625,8 +620,7 @@ def svc_param_selection(X, y, nfolds):
 
 def scale_X(X):
     scaler = MinMaxScaler()
-    scaled_X = scaler.fit_transform(X)
-    return scaled_X
+    return scaler.fit_transform(X)
 
 
 def scale_train_test(X_train, X_test):

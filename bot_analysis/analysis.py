@@ -71,14 +71,14 @@ def add_stance_to_last_column_for_bots2(file, filename_write, dict_user_names_id
                 fields = line.split(",")
                 # user_screen_name = fields[0].lower()
                 user_screen_name = fields[0].lower()
-                if not user_screen_name in dict_user_names_ids:
+                if user_screen_name not in dict_user_names_ids:
                     print("major error")
                     counter_non_exist += 1
                     continue
 
                 user_id = dict_user_names_ids[user_screen_name]
 
-                if not user_id in dict_user_stances:
+                if user_id not in dict_user_stances:
                     print("major error")
                     counter_non_exist += 1
                     continue
@@ -86,21 +86,17 @@ def add_stance_to_last_column_for_bots2(file, filename_write, dict_user_names_id
                 stance = dict_user_stances[user_id]
                 output_line = ""
 
-                counter = 0
                 for field in fields:
-
                     field = field.rstrip("\r\n")
                     output_line += str(field)
                     output_line += ","
-                    counter += 1
-
                 output_line += str(stance)
                 file_write.write(output_line)
                 file_write.write("\n")
             except Exception as ex:
                 logger.info(ex)
                 logger.info(traceback.format_exc())
-        print(str(counter_non_exist))
+        print(counter_non_exist)
 
 
 def combine_all_and_export_file(dict_screen_names,dict_bot_scores,dict_user_stance):
@@ -111,17 +107,17 @@ def combine_all_and_export_file(dict_screen_names,dict_bot_scores,dict_user_stan
 
     for screenname,score in dict_bot_scores.items():
 
-        if not screenname in dict_screen_names.keys():
+        if screenname not in dict_screen_names.keys():
             counter_not_existing_screenname += 1
             continue
         user_id = dict_screen_names[screenname]
 
-        if not user_id in dict_user_stance.keys():
+        if user_id not in dict_user_stance.keys():
             counter_not_existing_userstance += 1
             continue
         counter += 1
         stance = dict_user_stance[user_id]
-        score=score[0:4]
+        score = score[:4]
         file_write.write(screenname+"~"+str(user_id)+"~"+str(score)+"~"+str(stance))
         file_write.write("\n")
         if(counter%10000 == 0):

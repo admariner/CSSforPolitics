@@ -39,11 +39,11 @@ def enrich_mongo_w_tweet_metadata():
             mymonth = str(month).rjust(2, '0')
             for day in range(day_start, day_end):
                 myday = str(day).rjust(2, '0')
-                for hour in range(0, 24):
+                for hour in range(24):
                     myhour = str(hour).rjust(2, '0')
-                    for min in range(0, 60):
+                    for min in range(60):
                         mymin = str(min).rjust(2, '0')
-                        for sec in range(0, 60):
+                        for sec in range(60):
                             mysec = str(sec).rjust(2, '0')
                             filterdate = "2018-" + str(mymonth) + "-" + str(myday) + " " + str(myhour) + ":" + str(
                                 mymin) + ":" + str(mysec)
@@ -54,14 +54,14 @@ def enrich_mongo_w_tweet_metadata():
                                     if res is None:
                                         break
 
-                                    counter_general = counter_general + 1
+                                    counter_general += 1
                                     if "tw_coordinates" in res.keys():
                                         if counter_general % 5000 == 0:
                                             logger.info("counter general:" + str(
                                                 counter_general) + " date: " + filterdate + " " + str(res))
                                         continue
 
-                                    counter_new = counter_new + 1
+                                    counter_new += 1
                                     # if counter_new % 100 == 0:
                                     logger.info(
                                         "new enrichment count:" + str(counter_new) + " date: " + filterdate + " " + str(

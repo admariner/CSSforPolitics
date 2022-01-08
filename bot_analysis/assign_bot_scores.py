@@ -51,7 +51,7 @@ def enrich_mongo_with_bot_scores():
                         logger.info(res["user_id"] + " already enriched with bot score. skipping. counter_already_enriched:" + str(counter_already_enriched))
                     continue
 
-                if not "user_screen_name" in res:
+                if "user_screen_name" not in res:
                     logger.error("fatal error, does not contain screen name: " + res["user_id"])
                     continue
 
@@ -63,7 +63,7 @@ def enrich_mongo_with_bot_scores():
                 account = utils.remove_ampercant_first_char_if_exists(user_screen_name)
                 bot_res = bot_api.check_account(account)
                 score = str(bot_res['scores']['universal'])
-                score = score[0:4]
+                score = score[:4]
                 db.user.update({"user_screen_name": user_screen_name}, {"$set": {"bot_sc": score}})
 
                 logger.info("new enrichment count:" + str(counter_new) + " user id:" + user_screen_name)

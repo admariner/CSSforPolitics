@@ -48,7 +48,7 @@ def extract_tweet_text(file):
             try:
                 count_tweet += 1
                 fields = line.split("~")
-                if (fields[0][0:2] != '20'):
+                if fields[0][:2] != '20':
                     continue
                 language = fields[len(fields) - 2]
                 if language == 'en':
@@ -59,7 +59,7 @@ def extract_tweet_text(file):
                 tweet_id = fields[1]
                 tweet_text = fields[3]
 
-                if tweet_text == "" or tweet_text == "undefined":
+                if tweet_text in ["", "undefined"]:
                     counter_und += 1
                     continue
                 else:

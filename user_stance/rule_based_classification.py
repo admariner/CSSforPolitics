@@ -55,17 +55,17 @@ def create_ml_r1_file_read_line():
                     r1 = -1
                 else:
                     r1 = utils.find_label_of_tweet(hashtags)
-                    if r1 == 0:
+                    if r1 == -1:
+                        counter_neutral += 1
+
+                    elif r1 == 0:
                         counter_remain += 1
                     elif r1 == 1:
                         counter_leave += 1
-                    elif r1 == -1:
-                        counter_neutral += 1
-
                 counter += 1
                 new_line = id + "~" + user_id + "~" + datetime + "~" + text + "~" + str(r1) + "\n"
                 f_write.write(new_line)
-                if r1 == 0 or r1 == 1:
+                if r1 in [0, 1]:
                     f_write_polarized.write(new_line)
                 elif r1 == -1:
                     f_write_neutrals.write(new_line)

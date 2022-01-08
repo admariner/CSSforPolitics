@@ -49,36 +49,34 @@ def extract_stance_changes_of_users_before_after_ref(file):
                 user_id = row['user_id']
                 datetime_object = datetime.strptime(row['datetime'], '%Y-%m-%d')
                 r1 = int(row['r1'])
-                if(datetime_object < datetime_ref):
-                    if not user_id in dict_users_before_ref.keys():
-                        if (r1 == 0):
-                            value = (1, 0)
-                        elif (r1 == 1):
-                            value = (0, 1)
-
-                    else:
+                if (datetime_object < datetime_ref):
+                    if user_id in dict_users_before_ref:
                         (remain,leave) = dict_users_before_ref[user_id]
                         if (r1 == 0):
                             remain += 1
                         elif (r1 == 1):
                             leave +=1
                         value = (remain, leave)
+                    elif r1 == 0:
+                        value = (1, 0)
+                    elif r1 == 1:
+                        value = (0, 1)
+
                     dict_users_before_ref[user_id] = value
 
-                elif (datetime_object > datetime_ref):
-                    if not user_id in dict_users_after_ref.keys():
-                        if (r1 == 0):
-                            value = (1, 0)
-                        elif (r1 == 1):
-                            value = (0, 1)
-
-                    else:
+                elif datetime_object > datetime_ref:
+                    if user_id in dict_users_after_ref:
                         (remain,leave) = dict_users_after_ref[user_id]
                         if (r1 == 0):
                             remain += 1
                         elif (r1 == 1):
                             leave +=1
                         value = (remain, leave)
+                    elif r1 == 0:
+                        value = (1, 0)
+                    elif r1 == 1:
+                        value = (0, 1)
+
                     dict_users_after_ref[user_id] = value
 
             except Exception as ex:
@@ -91,12 +89,8 @@ def extract_stance_changes_of_users_before_after_ref(file):
 
         logger.info("discarding operation for the people who don't have tweets in after ref time periods. current size: " + str(len(dict_users_before_ref)))
 
-        for key in dict_users_before_ref.keys():
-            has_found = False
-            for key2 in dict_users_after_ref.keys():
-                if(key == key2):
-                    has_found = True
-                    break
+        for key in dict_users_before_ref:
+            has_found = any((key == key2) for key2 in dict_users_after_ref)
             if not has_found:
                 keys_to_be_deleted_from_dict_before.append(key)
 
@@ -108,12 +102,8 @@ def extract_stance_changes_of_users_before_after_ref(file):
         keys_to_be_deleted_from_dict_after = []
         logger.info("discarding operation for the people who don't have tweets in after ref time periods. current size: " + str(len(dict_users_after_ref)))
 
-        for key in dict_users_after_ref.keys():
-            has_found = False
-            for key2 in dict_users_before_ref.keys():
-                if(key == key2):
-                    has_found = True
-                    break
+        for key in dict_users_after_ref:
+            has_found = any((key == key2) for key2 in dict_users_before_ref)
             if not has_found:
                 keys_to_be_deleted_from_dict_after.append(key)
 
@@ -126,18 +116,11 @@ def extract_stance_changes_of_users_before_after_ref(file):
         dframe = pd.DataFrame(data=None, columns=['before','after'], index=dict_users_before_ref.keys())
         for key, value in dict_users_before_ref.items():
             (remain,leave) = value
-            if(remain>=leave):
-                dframe.at[key,'before']=0
-            else:
-                dframe.at[key,'before']=1
-
+            dframe.at[key,'before'] = 0 if (remain>=leave) else 1
         for key, value in dict_users_after_ref.items():
             (remain,leave) = value
 
-            if(remain>=leave):
-                dframe.at[key,'after']=0
-            else:
-                dframe.at[key,'after']=1
+            dframe.at[key,'after'] = 0 if (remain>=leave) else 1
         dframe.to_csv(file+"out_stance_change.csv")
 
     except Exception as ex:
@@ -156,25 +139,23 @@ def extract_stance_changes_of_users_with_only_two_tweets(file):
                 user_id = row['user_id']
                 datetime_object = datetime.strptime(row['datetime'], '%Y-%m-%d')
                 r1 = row['r1']
-                if not user_id in dict_users.keys():
+                if user_id not in dict_users:
                     dict_users[user_id] = {1:(datetime_object, str(r1))}
                 else:
                     records = dict_users[user_id]
-                    if(len(records)==1):
-                        old_datetime_object, old_r1 = records[1]
+                    old_datetime_object, old_r1 = records[1]
+                    if (len(records)==1):
                         if old_datetime_object > datetime_object:
                             records[1] = (datetime_object,str(r1))
                             records[2] = (old_datetime_object,str(old_r1))
                         elif old_datetime_object < datetime_object:
                             records[2] = (datetime_object, str(r1))
-                    else:
-                        old_datetime_object, old_r1 = records[1]
-                        if old_datetime_object > datetime_object:
-                            records[1] = (datetime_object,str(r1))
-                        elif old_datetime_object < datetime_object:
-                            old_datetime_object, old_r1 = records[2]
-                            if old_datetime_object < datetime_object:
-                                records[2] = (datetime_object, str(r1))
+                    elif old_datetime_object > datetime_object:
+                        records[1] = (datetime_object,str(r1))
+                    elif old_datetime_object < datetime_object:
+                        old_datetime_object, old_r1 = records[2]
+                        if old_datetime_object < datetime_object:
+                            records[2] = (datetime_object, str(r1))
             except Exception as ex:
                 logger.error(row)
                 logger.error(str(ex))
@@ -192,7 +173,7 @@ def extract_stance_changes_of_users_with_only_two_tweets(file):
             for key2, value2 in ordered_values.items():
                 (date, stance) = value2
                 output += str(stance) + ","
-            output = output[0:len(output)-1]
+            output = output[:len(output)-1]
             counter += 1
             file_write.write(output)
             file_write.write("\n")
@@ -223,9 +204,9 @@ def extract_daily_polarized_tweets(file):
                     continue
 
                 p1 = fields[len(fields) - 3]
-                if p1 == '1' or p1 == '2':
-                    datetime = fields[0][0:10]
-                    if (datetime[0:2] != '20'):
+                if p1 in ['1', '2']:
+                    datetime = fields[0][:10]
+                    if datetime[:2] != '20':
                         continue
                     logger.info(str(count_tweet) + "," + str(datetime))
                     key = datetime
@@ -271,7 +252,7 @@ def calculate_stance_transitions(first, second):
     one_to_one = 0
     zero_to_one = 0
     one_to_zero = 0
-    for i in range(0, len(first)):
+    for i in range(len(first)):
         if(first[i]==0 and second[i]==0):
             zero_to_zero += 1
         elif(first[i] == 1 and second[i] == 1):
@@ -290,8 +271,6 @@ def calculate_stance_transitions(first, second):
     val = 10
     return zero_to_zero_res*val, one_to_one_res*val, zero_to_one_res*val, one_to_zero_res*val
 
-    print("good")
-
 
 def plot_stance_transition():
     try:
@@ -308,7 +287,7 @@ def plot_stance_transition():
         plt.yticks([0,1])
 
         counter = 0
-        for i in range(0,colsize):
+        for i in range(colsize):
             if(i==colsize-1):
                 break
             counter += 1
@@ -431,19 +410,16 @@ def extract_users_total_topic_counts(file):
                 user_id = fields[1]
                 r1 = fields[4]
 
-                if r1 == '0' or r1 == '1':
+                if r1 in ['0', '1']:
 
-                    if user_id in users_total_topic_counts.keys():
+                    if user_id in users_total_topic_counts:
                         if r1 == '0':
                             users_total_topic_counts[user_id][0] += 1
-                        elif r1 == '1':
+                        else:
                             users_total_topic_counts[user_id][1] += 1
 
                     else:
-                        if r1 == '0':
-                            value = [1, 0]
-                        elif r1 == '1':
-                            value = [0, 1]
+                        value = [1, 0] if r1 == '0' else [0, 1]
                         users_total_topic_counts[user_id] = value
 
             except Exception as ex:
@@ -496,10 +472,10 @@ def pandas_users_stances(file):
 
 
 def main():
-    if (globals.os == "windows"):
-        log_path = "F:/tmp/custom.log"
-    else:
-        log_path = "predictor.log"
+    log_path = (
+        "F:/tmp/custom.log" if (globals.os == "windows") else "predictor.log"
+    )
+
     logger.basicConfig(level="INFO", filename=log_path, format="%(asctime)s %(message)s")
 
     try:

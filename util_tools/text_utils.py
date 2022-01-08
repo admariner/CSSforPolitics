@@ -59,15 +59,9 @@ logger.basicConfig(filename='data.log', format="%(asctime)s:%(levelname)s:%(mess
 print(words)
 
 def check_english_from_short_text(text):
-    res = False
     words = text.split(" ")
 
-    for word in words:
-        if word in en_word_list:
-            res = True
-            break
-
-    return res
+    return any(word in en_word_list for word in words)
 
 
 def transform_input_to_stance_input(text):
@@ -120,14 +114,7 @@ def transform_input_to_stance_input(text):
 
         new_words.append(word)
 
-    if is_english_text:
-        res = ' '.join(new_words)
-        #res = res.replace("  "," ")
-    else:
-
-        res = None
-
-    return res
+    return ' '.join(new_words) if is_english_text else None
 
 
 def check_english_from_large_text(text):
@@ -178,7 +165,7 @@ def remove_non_english_lines(file):
                     if(lang=="en"):
                         fw.write(line + "\n")
                         continue
-                    if(lang!="" and lang!="en"):
+                    if lang != "":
                         cnt_err += 1
                         continue
 
@@ -225,9 +212,9 @@ def get_twitter_api():
 
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
-    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-
-    return api
+    return tweepy.API(
+        auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True
+    )
 
 
 
@@ -237,9 +224,8 @@ def read_tweets_in_json_format(filename, is_for_test):
         max_rows_count = 10
     counter = 0
     for line in open(filename, 'r', encoding='cp866'):
-        if is_for_test:
-            if counter == max_rows_count:
-                break
+        if is_for_test and counter == max_rows_count:
+            break
         tweets.append(json.loads(line))
         counter += 1
 
@@ -337,22 +323,15 @@ with open("/Users/emrecalisir/git/cortico/discovery/dataset_paper/data/sentiment
 
 def is_less_than_character_count(word):
     max_limit = 3
-    res = False
     list_characters = list(word)
-    if len(list_characters) < max_limit:
-        res = True
-    return res
+    return len(list_characters) < max_limit
 
 
 def is_stopword(word):
-    # this method is related with Word2Vec
-    res = False
     # print(str(stop_words_voc))
     if stop_words_voc is None:
         exit(-1)
-    if word in stop_words_voc:
-        res = True
-    return res
+    return word in stop_words_voc
 
 
 def get_mean_vector_value_of_text(text, dimension, model):
@@ -379,7 +358,7 @@ def get_mean_vector_value_of_text(text, dimension, model):
                 # else:
                 # print("not existing in model: " + word)
 
-        if len(current_word2vec) == 0:
+        if not current_word2vec:
             zeros = [0] * dimension
             current_word2vec.append(zeros)
 
@@ -444,15 +423,16 @@ def ratio(y_true, y_pred, pct):
     idx = np.argsort(y_pred)[-n:]
     prob_min = y_pred[idx[0]]
     y_true_sum = y_true[idx].sum()
-    y_emre = []
-    for id in idx:
-        y_emre.append(str(y_pred[id]) + ";" + str(y_true[id]))
-        # print(y_emre)
+    y_emre = [str(y_pred[id]) + ";" + str(y_true[id]) for id in idx]
     ratio_float = (y_true_sum / float(n))
     ratio_val = "{0:.2f}%".format(ratio_float * 100)
 
-    res = "tp_ratio: " + str(ratio_val) + " , lowest probability score: " + str(round(prob_min, 2))
-    return res
+    return (
+        "tp_ratio: "
+        + str(ratio_val)
+        + " , lowest probability score: "
+        + str(round(prob_min, 2))
+    )
 
 
 def plot_roc(y_test, preds):
@@ -520,10 +500,9 @@ def preprocess_text_for_topic_discovery(df):
         split = line.split()
         if len(split)>2:
             new_list.append(line)
-    df_new = pd.Series(new_list)
     #df['total_words'] = df['processed_text'].str.split().str.len()
     #df_new = df[df['total_words']>2]
-    return df_new
+    return pd.Series(new_list)
 
 
 def remove_polarized_hashtags_urls(tweet):
@@ -566,8 +545,7 @@ def convert_text_to_word2vec(data, dimension, model):
         vect_mean = get_mean_vector_value_of_text(textvalue, dimension, model)
         vect_means.append(vect_mean)
 
-    np_vect_means = np.asarray(vect_means)
-    return np_vect_means
+    return np.asarray(vect_means)
 
 
 def extract_mentions_from_text(text):
@@ -655,9 +633,7 @@ def get_ml_model(model_id, prob_enabled):
 def apply_preprocessing_to_tweet(tweet):
     words = tokenize_tweet(tweet)
     words = normalize_for_political_stance(words)
-    processed = untokenize(words)
-
-    return processed
+    return untokenize(words)
 
 def normalize_text(tweets):
 
@@ -754,9 +730,7 @@ def json_to_csv_converter(filename_read, filename_write, preprocessing=True):
 def tokenize_tweet(tweet):
 
     tknzr = TweetTokenizer(strip_handles=True, reduce_len=True)
-    tokenized_tweet = tknzr.tokenize(tweet)
-
-    return tokenized_tweet
+    return tknzr.tokenize(tweet)
 
 
 def remove_non_ascii(words):
@@ -796,8 +770,7 @@ def remove_punctuation_from_line(line):
         if new_word != '':
             new_words.append(new_word)
 
-    new_line = ' '.join(new_words)
-    return new_line
+    return ' '.join(new_words)
 
 
 def replace_numbers_with_string(words):
@@ -816,28 +789,16 @@ def replace_numbers_with_string(words):
 def discard_numbers(words):
     """Replace all interger occurrences in list of tokenized words with textual representation"""
     p = inflect.engine()
-    new_words = []
-    for word in words:
-        if not word.isdigit():
-            new_words.append(word)
-    return new_words
+    return [word for word in words if not word.isdigit()]
 
 
 def discard_mentions(words):
-    new_words = []
-    for word in words:
-        if word[0] != '@':
-            new_words.append(word)
-    return new_words
+    return [word for word in words if word[0] != '@']
 
 
 def remove_stopwords(words):
     """Remove stop words from list of tokenized words"""
-    new_words = []
-    for word in words:
-        if word not in stop_words_voc:
-            new_words.append(word)
-    return new_words
+    return [word for word in words if word not in stop_words_voc]
 
 
 def is_weblink(word):
@@ -849,11 +810,7 @@ def is_weblink(word):
 
 
 def remove_weblinks(words):
-    new_words = []
-    for word in words:
-        if not is_weblink(word):
-            new_words.append(word)
-    return new_words
+    return [word for word in words if not is_weblink(word)]
 
 
 def stem_words(words):
@@ -959,7 +916,7 @@ def pearson():
     print("len list2: ", len(list2))
 
     print(pearsonr(list1, list2))
-    print(str(np.corrcoef(list1, list2)))
+    print(np.corrcoef(list1, list2))
 
 
 if __name__ == "__main__":
@@ -973,10 +930,7 @@ if __name__ == "__main__":
 
     for i in range(1, 13):
 
-        if i<10:
-            path += "0" + str(i) + ".out_sent.csv"
-        else:
-            path += str(i) + ".out_sent.csv"
+        path += "0" + str(i) + ".out_sent.csv" if i<10 else str(i) + ".out_sent.csv"
         remove_non_english_lines(path)
 
     #list1 = [241, 69, 72, 143, 128, 68, 126, 82, 126, 108, 68, 90, 81, 60, 72, 93, 80, 97, 65, 74, 710]

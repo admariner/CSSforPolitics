@@ -25,10 +25,7 @@ def is_tweet_eligible_for_new_enrichment(res):
         logger.info("not existing any hashtag for ID:" + str(res["ID"]))
         return False
 
-    if res["tw_lang"] != "en":
-        return False
-
-    return True
+    return res["tw_lang"] == "en"
 
 
 def enrich_mongo_with_r1():
@@ -75,8 +72,6 @@ def enrich_mongo_with_r1():
             db.tweet.update({"ID": res["ID"]}, {"$set": {"r1": '1'}})
         elif has_leave_hashtag and not has_remain_hashtag:
             db.tweet.update({"ID": res["ID"]}, {"$set": {"r1": '2'}})
-        elif has_other_neutral and not has_remain_hashtag and not has_leave_hashtag:
-            db.tweet.update({"ID": res["ID"]}, {"$set": {"r1": '0'}})
         else:
             db.tweet.update({"ID": res["ID"]}, {"$set": {"r1": '0'}})
 
@@ -127,21 +122,20 @@ def populate_missing_data_for_stance_transition(file):
                 real_values = {}
                 counter += 1
                 logger.info(str(counter) + " out of " + str(total_count) + " completed.")
-                print(str(counter))
-                for i in range(0, row.size):
+                print(counter)
+                for i in range(row.size):
                     temp = row[i]
                     if (type(temp) == str):
                         temp = int(temp)
 
                     if (math.isnan(temp)):
                         continue
-                    else:
-                        val = (int)(row[i])
-                        real_values[i] = val
+                    val = (int)(row[i])
+                    real_values[i] = val
                 ordered_real_values = collections.OrderedDict(sorted(real_values.items()))
                 if (counter % 1000 == 0):
                     logger.info("ordering completed for" + str(counter) + " th row, out of " + str(total_count))
-                for i in range(0, row.size):
+                for i in range(row.size):
                     col_name=str(i+1)
                     temp = row[i]
                     if (type(temp) == str):
@@ -189,16 +183,15 @@ def populate_missing_data_for_stance_transition_s():
             counter += 1
             if(counter%1000==0):
                 logger.info(str(counter) + " out of " + str(total_count) + " completed.")
-            for i in range(0,row.size):
-                if(math.isnan(row[i])):
+            for i in range(row.size):
+                if (math.isnan(row[i])):
                     continue
-                else:
-                    val = (int)(row[i])
-                    real_values[i]=val
+                val = (int)(row[i])
+                real_values[i]=val
             ordered_real_values = collections.OrderedDict(sorted(real_values.items()))
             if(counter%1000==0):
                 logger.info("ordering completed for" + str(counter) + " th row, out of " + str(total_count))
-            for i in range(0,row.size):
+            for i in range(row.size):
                 if(math.isnan(row[i])):
                     cnt_dict = 0
                     for key,value in ordered_real_values.items():
@@ -251,8 +244,7 @@ def remove_different_stance_of_same_user_in_same_day(file):
                         else:
                             datetime_r1_count[datetime]=r1_count
                     else:
-                        datetime_r1_count = {}
-                        datetime_r1_count[datetime] = r1_count
+                        datetime_r1_count = {datetime: r1_count}
                         dict_user[user_id] = datetime_r1_count
 
                 except Exception as ex:
@@ -282,12 +274,12 @@ def enrich_user_id_train_mlma(file):
             if not res:
                 logger.info("this tweet is not existing: " + str(id))
                 continue;
-            if not 'user_id' in res:
+            if 'user_id' not in res:
                 logger.info("this tweet does not have user id: " + str(id))
                 continue;
             user_id = res["user_id"]
             datetime = res["datetime"]
-            text = res["text"]      
+            text = res["text"]
             df.loc[index,'user_id'] = user_id
             df.loc[index, 'datetime'] = datetime
             df.loc[index, 'text'] = text
